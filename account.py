@@ -12,6 +12,12 @@ def generate_keypair():
     priv_key, pub_key = keys.gen_keypair(curve.secp256k1)
     return priv_key, pub_key
 
+def serialize_pub_key(pub_key):
+    return keys.export_key(pub_key, curve=curve.secp256k1)
+
+def deserialize_pub_key(pub_key_str):
+    return keys.PEMEncoder.decode_public_key(pub_key_str, curve=curve.secp256k1)
+
 def generate_address(pub_key, address_bytes=20):
     concat_pub = hex_number(pub_key.x) + hex_number(pub_key.y)
     concat_pub_bytes = bytes.fromhex(concat_pub)
@@ -19,7 +25,6 @@ def generate_address(pub_key, address_bytes=20):
     m.update(concat_pub_bytes)
     address = '0x' + m.hexdigest()[-2*address_bytes:]
     return address
-
 
 def verify(message, pub_key, signature):
     signature_length = len(signature)
@@ -29,6 +34,7 @@ def verify(message, pub_key, signature):
     valid = ecdsa.verify((r, s), message, pub_key, curve=curve.secp256k1)
     return valid
 
+
 @dataclass
 class Account(object):
     """docstring for Account."""
@@ -37,6 +43,10 @@ class Account(object):
     pub_key: point.Point
     address: str
 
+    @property
+    def pub_key_str(self):
+        return serialize_pub_key(self.pub_key)
+        
     def __init__(self, priv_key=None):
         if priv_key == None:
             self.priv_key, self.pub_key = generate_keypair()
@@ -53,6 +63,12 @@ class Account(object):
 if __name__ == '__main__':
     toms_account = Account()
 
-    message = "pears"
-    signature = toms_account.sign(message)
-    valid = verify(message, toms_account.pub_key, signature)
+    # message = "pears"
+    # signature = toms_account.sign(message)
+    # valid = verify(message, toms_account.pub_key, signature)
+
+    print(toms_account.pub_key)
+    s = serialize_pub_key(toms_account.pub_key)
+    p = deserialize_pub_key(s)
+
+    print(p)
